@@ -1,11 +1,26 @@
 name: 'TomChv'
 description: 'A test for a github action'
 author: 'Vasek'
+branding:
+  icon: 'check-circle'
+  color: 'green'
 inputs:
-  milliseconds: # change this
+  token:
+    description: 'The GitHub token to use for making API requests.'
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  checkName:
+    description: 'The name of the GitHub check to wait for. For example, `build` or `deploy`.'
+    required: true
+  ref:
+    description: 'The Git ref of the commit you want to poll for a passing check.'
+  repo:
+    description: 'The name of the GitHub repository you want to poll for a passing check.'
+  owner:
+    description: 'The owner of the GitHub repository you want to poll for a passing check.'
+  timeoutSeconds:
+    description: 'The number of seconds to wait for the check to complete.'
+  intervalSeconds:
+    description: 'The number of seconds to wait before each poll of the GitHub API.'
 runs:
   using: 'node12'
   main: 'dist/index.js'
