@@ -3568,7 +3568,7 @@ exports.poll = void 0;
 const wait_1 = __webpack_require__(521);
 exports.poll = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const { client, log, checkName, timeoutSeconds, intervalSeconds, owner, repo, ref } = options;
-    log(`Process start for ${checkName}, ${owner}, ${ref}, ${client}`);
+    log(`Process start for ${checkName}, ${owner}, ${ref}, ${client}\n---\n`);
     let now = new Date().getTime();
     const deadline = now + timeoutSeconds * 1000;
     while (now <= deadline) {
@@ -3581,6 +3581,8 @@ exports.poll = (options) => __awaiter(void 0, void 0, void 0, function* () {
             ref
         });
         log(`Retrieved ${result.data.check_runs.length} check runs named ${checkName}`);
+        const check = result.data.check_runs;
+        log(`actual check: ${check}------\n------\n`);
         const completedCheck = result.data.check_runs.find(checkRun => checkRun.status === 'completed');
         if (completedCheck) {
             log(`Found a completed check with id ${completedCheck.id} and conclusion ${completedCheck.conclusion}`);
