@@ -1,5 +1,5 @@
 name: 'TomChv'
-description: 'A test for a github action'
+description: 'A Github Action that create order in your pipeline :)'
 author: 'Vasek'
 branding:
   icon: 'check-circle'
