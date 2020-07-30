@@ -29,9 +29,9 @@ export const poll = async (options: Options): Promise<string> => {
 	const deadline = now + timeoutSeconds * 1000;
 
 	while (now <= deadline) {
+		log('-----------------');
 		log(
-			`--------------------------\n
-			Retrieving check runs named ${checkName} on ${owner}/${repo}@${ref}...`
+			`Retrieving check runs named ${checkName} on ${owner}/${repo}@${ref}...`
 		);
 
 		const result = await client.checks.listForRef({
@@ -49,7 +49,7 @@ export const poll = async (options: Options): Promise<string> => {
 		const check = result.data.check_runs;
 
 		if (!check || !check.length) {
-			log(`${checkName} job does not exist : stop wait`);
+			log(`${checkName} job does not exist. Abort waiting`);
 			return 'not found';
 		} else {
 			log(`${checkName} job find`);

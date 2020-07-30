@@ -27,11 +27,11 @@ on:
   push:
 
 jobs:
-  build_job: # Here is your checkName var
+  build: # Here is your checkName var
     runs-on: self-hosted
 
     steps:
-      ## Build you application.. Push it to docker
+      ## Build you application.. Push it to docker for example
 ```
 
 **Deployment workflow**
@@ -42,7 +42,7 @@ jobs:
         id: wait-for-timeout
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          checkName: build_job
+          checkName: build
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           intervalSeconds: 10
           timeoutSeconds: 100
