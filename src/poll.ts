@@ -26,7 +26,7 @@ export const poll = async (options: Options): Promise<string> => {
 	} = options;
 
 	let now = new Date().getTime();
-	const deadline = now + timeoutSeconds * 1000;
+	let deadline = now + timeoutSeconds * 1000;
 
 	while (now <= deadline) {
 		log('-----------------');
@@ -57,6 +57,7 @@ export const poll = async (options: Options): Promise<string> => {
 
 		if (check.find(checkRun => checkRun.status === 'queued')) {
 			log(`${checkName} job is in queue`);
+			deadline = now + timeoutSeconds * 1000;
 		}
 
 		if (check.find(checkRun => checkRun.status === 'in_progress')) {
