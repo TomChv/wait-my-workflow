@@ -33,6 +33,7 @@ export const poll = async (options: Options): Promise<string> => {
 			`--------------------------\n
 			Retrieving check runs named ${checkName} on ${owner}/${repo}@${ref}...`
 		);
+
 		const result = await client.checks.listForRef({
 			// eslint-disable-next-line camelcase
 			check_name: checkName,
@@ -62,9 +63,14 @@ export const poll = async (options: Options): Promise<string> => {
 			log(`${checkName} job is in progress`);
 		}
 
-		if (check.find(checkRun => checkRun.status === 'completed')) {
-			log(`${checkName} job is finish`);
-			return 'success';
+		const completedCheck = result.data.check_runs.find(
+			checkRun => checkRun.status === 'completed'
+		);
+		if (completedCheck) {
+			log(
+				`Found a completed check with id ${completedCheck.id} and conclusion ${completedCheck.conclusion}`
+			);
+			return completedCheck.conclusion;
 		}
 
 		log(

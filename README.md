@@ -2,100 +2,129 @@
   <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
 </p>
 
-# Create a JavaScript Action using TypeScript
+# Github Action : Wait my workflow
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+This github action is based on  [wait-for-check](https://github.com/fountainhead/action-wait-for-check) action, please go put a star on his repo if you like my action. I simply altered the actions to match my needs.
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
+It works thanks to the [check states](https://docs.github.com/en/rest/reference/checks) (github action jobs). The action will ping the github API and check if a job is running on the repo given as argument.
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
+The objective of this action is to enable people to wait for jobs. It also handles the case where the job is not starting or does not exist.
 
-## Create an action from this template
+The timeout starts when the job is starting and not when it is in a queue. This ensures that you do not have a timeout for nothing.
 
-Click the `Use this Template` and provide the new repo details for your action
 
-## Code in Main
+## Exemple
 
-Install the dependencies  
-```bash
-$ npm install
-```
+Let's imagine a scenario where you have to wait for a build to finish before launching your deployment workflow.
+Your workflows files should look like this :
 
-Build the typescript and package it for distribution
-```bash
-$ npm run build && npm run package
-```
 
-Run the tests :heavy_check_mark:  
-```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
-```
-
-## Change action.yml
-
-The action.yml contains defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
-```bash
-$ npm run package
-$ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
-```
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
-
+**Build workflow**
 ```yaml
-uses: ./
-with:
-  milliseconds: 1000
+name: Build my app
+
+on:
+  push:
+
+jobs:
+  build_job: # Here is your checkName var
+    runs-on: self-hosted
+
+    steps:
+      ## Build you application.. Push it to docker
 ```
 
-See the [actions tab](https://github.com/actions/javascript-action/actions) for runs of this action! :rocket:
+**Deployment workflow**
+```yaml
+    steps:
+      - name: Wait a job
+        uses: tomchv/waiter-test@v1.0.5
+        id: wait-for-timeout
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: build_job
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          intervalSeconds: 10
+          timeoutSeconds: 100
 
-## Usage:
+      - name: Do something if job success
+        if: steps.wait-for-timeout.outputs.conclusion == 'success'
+        run: echo success && true
 
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
+      - name: Do something if job isn't launch
+        if: steps.wait-for-timeout.outputs.conclusion == 'does not exist'
+        run: echo job does not exist && true
+
+      - name: Do something if job fail
+        if: steps.wait-for-timeout.outputs.conclusion == 'failure'
+        run: echo fail && false
+
+      - name: Do something if job timeout
+        if: steps.wait-for-timeout.outputs.conclusion == 'timed_out'
+        run: echo Timeout && false
+
+    #... Other steps to do after your build
+```
+
+## Inputs
+
+This Action accepts the following configuration parameters via `with:`
+
+- `token`
+
+  **Required**
+  
+  The GitHub token to use for making API requests. Typically, this would be set to `${{ secrets.GITHUB_TOKEN }}`.
+  
+- `checkName`
+
+  **Required**
+  
+  The name of the GitHub check to wait for. For example, `build` or `deploy`.
+
+- `ref`
+
+  **Default: `github.sha`**
+  
+  The Git ref of the commit you want to poll for a passing check.
+  
+  *PROTIP: You may want to use `github.pull_request.head.sha` when working with Pull Requests.*
+
+  
+- `repo`
+
+  **Default: `github.repo.repo`**
+  
+  The name of the Repository you want to poll for a passing check.
+
+- `owner`
+
+  **Default: `github.repo.owner`**
+  
+  The name of the Repository's owner you want to poll for a passing check.
+
+- `timeoutSeconds`
+
+  **Default: `600`**
+
+  The number of seconds to wait for the check to complete. If the check does not complete within this amount of time, this Action will emit a `conclusion` value of `timed_out`.
+  
+- `intervalSeconds`
+
+  **Default: `10`**
+
+  The number of seconds to wait before each poll of the GitHub API for checks on this commit.
+
+## Outputs
+
+This Action emits a single output named `conclusion`. Like the field of the same name in the [CheckRunEvent API Response](https://developer.github.com/v3/activity/events/types/#checkrunevent-api-payload), it may be one of the following values:
+
+- `success`
+- `failure`
+- `neutral`
+- `timed_out`
+- `action_required`
+
+These correspond to the `conclusion` state of the Check you're waiting on. In addition, this action will emit a conclusion of `timed_out` if the Check specified didn't complete within `timeoutSeconds`.
+
+If the job does not exist, this Action will emit `not found` as conclusion.
