@@ -14,7 +14,9 @@ The timeout starts when the job is starting and not when it is in a queue. This 
 
 **Tips**: be sure all yours jobs has a unique name in order to don't have surprise.
 
-## Exemple
+**Tips**: Remember that you can also wait multiples steps. Simply wait for each step as you go along (if the step is already completed, the conclusion remains intact).
+
+## Example
 
 Let's imagine a scenario where you have to wait for a build to finish before launching your deployment workflow.
 Your workflows files should look like this :
@@ -35,12 +37,24 @@ jobs:
       ## Build you application.. Push it to docker for example
 ```
 
+> Your build step can also be in the deployment file. It's just a step.
+
 **Deployment workflow**
+
+On this workflow, 4 conditions can be triggered depending on the progress of the build(s)
+
 ```yaml
+name: Deploy my app
+
+on:
+  push:
+
+jobs:
+  deploy:
     steps:
-      - name: Wait a job
-        uses: tomchv/waiter-test@v1.0.5
-        id: wait-for-timeout
+      - name: Wait my build
+        uses: tomchv/wait-my-workflow@v1.1.0
+        id: wait-build
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           checkName: build
@@ -48,23 +62,24 @@ jobs:
           intervalSeconds: 10
           timeoutSeconds: 100
 
-      - name: Do something if job success
-        if: steps.wait-for-timeout.outputs.conclusion == 'success'
-        run: echo success && true
+      - name: Do something if build success
+        if: steps.wait-build.outputs.conclusion == 'success'
+        run: echo success && true # You can also just continue with
 
-      - name: Do something if job isn't launch
-        if: steps.wait-for-timeout.outputs.conclusion == 'does not exist'
+      - name: Do something if build isn't launch
+        if: steps.wait-build.outputs.conclusion == 'does not exist'
         run: echo job does not exist && true
 
-      - name: Do something if job fail
-        if: steps.wait-for-timeout.outputs.conclusion == 'failure'
-        run: echo fail && false
+      - name: Do something if build fail
+        if: steps.wait-build.outputs.conclusion == 'failure'
+        run: echo fail && false # fail if build fail
 
-      - name: Do something if job timeout
-        if: steps.wait-for-timeout.outputs.conclusion == 'timed_out'
-        run: echo Timeout && false
-
-    #... Other steps to do after your build
+      - name: Do something if build timeout
+        if: steps.wait-build.outputs.conclusion == 'timed_out'
+        run: echo Timeout && false # fail if build time out
+      
+      - name: Deploy my add
+      # Deploy my app... or wait an other build
 ```
 
 ## Inputs
