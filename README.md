@@ -12,6 +12,7 @@ The objective of this action is to enable people to wait for jobs. It also handl
 
 The timeout starts when the job is starting and not when it is in a queue. This ensures that you do not have a timeout for nothing.
 
+**Tips**: be sure all yours jobs has a unique name in order to don't have surprise.
 
 ## Exemple
 

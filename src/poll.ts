@@ -49,19 +49,17 @@ export const poll = async (options: Options): Promise<string> => {
 		const check = result.data.check_runs;
 
 		if (!check || !check.length) {
-			log(`${checkName} job does not exist. Abort waiting`);
+			log(`${checkName} job does not exist. Conclusion : 'not found'`);
 			return 'not found';
-		} else {
-			log(`${checkName} job find`);
 		}
 
 		if (check.find(checkRun => checkRun.status === 'queued')) {
-			log(`${checkName} job is in queue`);
+			log(`Found a ${checkName} job in queue`);
 			deadline = now + timeoutSeconds * 1000;
 		}
 
 		if (check.find(checkRun => checkRun.status === 'in_progress')) {
-			log(`${checkName} job is in progress`);
+			log(`Found a ${checkName} job in progress`);
 		}
 
 		const completedCheck = result.data.check_runs.find(
