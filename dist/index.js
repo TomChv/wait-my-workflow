@@ -3595,9 +3595,10 @@ exports.poll = (options) => __awaiter(void 0, void 0, void 0, function* () {
         if (check.find(checkRun => checkRun.status === 'in_progress')) {
             log(`${checkName} job is in progress`);
         }
-        if (check.find(checkRun => checkRun.status === 'completed')) {
-            log(`${checkName} job is finish`);
-            return 'success';
+        const completedCheck = result.data.check_runs.find(checkRun => checkRun.status === 'completed');
+        if (completedCheck) {
+            log(`Found a completed check with id ${completedCheck.id} and conclusion ${completedCheck.conclusion}`);
+            return completedCheck.conclusion;
         }
         log(`No completed checks named ${checkName}, waiting for ${intervalSeconds} seconds...`);
         yield wait_1.wait(intervalSeconds * 1000);
