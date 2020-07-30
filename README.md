@@ -8,7 +8,7 @@ This github action is based on  [wait-for-check](https://github.com/fountainhead
 
 It works thanks to the [check states](https://docs.github.com/en/rest/reference/checks) (github action jobs). The action will ping the github API and check if a job is running on the repo given as argument.
 
-The objective of this action is to enable people to wait for jobs. It also handles the case where the job is not starting or does not exist.
+The objective of this action is to allow chained workflows. If the workflow don't run / don't exist, the action just stops waiting in order to don't lose time.
 
 The timeout starts when the job is starting and not when it is in a queue. This ensures that you do not have a timeout for nothing.
 
