@@ -3569,10 +3569,10 @@ const wait_1 = __webpack_require__(521);
 exports.poll = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const { client, log, checkName, timeoutSeconds, intervalSeconds, owner, repo, ref } = options;
     let now = new Date().getTime();
-    const deadline = now + timeoutSeconds * 1000;
+    let deadline = now + timeoutSeconds * 1000;
     while (now <= deadline) {
-        log(`--------------------------\n
-			Retrieving check runs named ${checkName} on ${owner}/${repo}@${ref}...`);
+        log('-----------------');
+        log(`Retrieving check runs named ${checkName} on ${owner}/${repo}@${ref}...`);
         const result = yield client.checks.listForRef({
             // eslint-disable-next-line camelcase
             check_name: checkName,
@@ -3583,7 +3583,7 @@ exports.poll = (options) => __awaiter(void 0, void 0, void 0, function* () {
         log(`Retrieved ${result.data.check_runs.length} check runs named ${checkName}`);
         const check = result.data.check_runs;
         if (!check || !check.length) {
-            log(`${checkName} job does not exist : stop wait`);
+            log(`${checkName} job does not exist. Abort waiting`);
             return 'not found';
         }
         else {
@@ -3591,6 +3591,7 @@ exports.poll = (options) => __awaiter(void 0, void 0, void 0, function* () {
         }
         if (check.find(checkRun => checkRun.status === 'queued')) {
             log(`${checkName} job is in queue`);
+            deadline = now + timeoutSeconds * 1000;
         }
         if (check.find(checkRun => checkRun.status === 'in_progress')) {
             log(`${checkName} job is in progress`);
